@@ -1,0 +1,56 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OpenVINO artifacts
+*.bin
+*.xml
+!models/**/*.xml
+!models/**/*.bin
+*.onnx
+*.pt
+*.pth
+
+# Benchmark results (keep in docs, not root)
+benchmark_results.json
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Environment / secrets
+.env
+.env.local
+
+# Logs
+*.log
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Coverage
+.coverage
+htmlcov/
+
+# Freebuff
+.freebuff/

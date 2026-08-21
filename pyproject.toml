@@ -1,0 +1,63 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "foveaedge"
+version = "0.1.0"
+description = "OpenVINO Event-Driven Foveated Edge Vision Engine"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [
+    {name = "FoveaEdge Contributors"},
+]
+keywords = [
+    "openvino",
+    "edge-vision",
+    "foveated-inference",
+    "event-driven",
+    "roi",
+    "async-inference",
+]
+
+dependencies = [
+    "openvino>=2024.0",
+    "opencv-python>=4.8",
+    "numpy>=1.24",
+    "PyYAML>=6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+]
+benchmark = [
+    "tqdm>=4.65",
+    "matplotlib>=3.7",
+]
+all = [
+    "foveaedge[dev,benchmark]",
+]
+
+[project.scripts]
+foveaedge-info = "foveaedge.cli:info_main"
+foveaedge-bench = "foveaedge.cli:bench_main"
+
+[tool.setuptools.packages.find]
+include = ["foveaedge*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
