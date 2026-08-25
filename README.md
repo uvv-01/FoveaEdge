@@ -14,8 +14,8 @@ Can high-resolution edge vision systems avoid running expensive inference over t
 | OpenVINO model/inference | Implemented |
 | Reproducible baseline | **Implemented** |
 | Region representation | **Implemented** |
-| ROI extraction | Planned |
-| ROI inference | Planned |
+| ROI extraction | **Implemented** |
+| ROI inference | **Implemented** |
 | Baseline vs ROI benchmark | Planned |
 | Spatial selector | Planned |
 | Temporal stability | Planned |
@@ -31,7 +31,7 @@ Can high-resolution edge vision systems avoid running expensive inference over t
 | OpenVINO integration audit | Planned |
 | Reproducibility package | Planned |
 
-## Current Implementation (Day 4)
+## Current Implementation (Day 6)
 
 ### OpenVINO Inference (Day 2)
 - **ModelLoader**: Load and compile OpenVINO models with device validation
@@ -53,13 +53,26 @@ Can high-resolution edge vision systems avoid running expensive inference over t
 - **RegionSet**: Collection with add/remove, bounding box, area, filtering
 - **Geometry**: intersection_area, IoU, overlap_ratio, contains_point, contains_region, clip_region
 
+### ROI Extraction (Day 5)
+- **ExtractedROI**: Image crop with original coordinate metadata
+- **ROIExtractor**: Model-agnostic extraction with `extract()` and `extract_many()`
+- Boundary handling: regions clipped via Region.clip_to_frame()
+- Source safety: never mutates the source frame
+
+### ROI Inference (Day 6)
+- **ROIInferenceEngine**: Orchestrates ROI extraction + OpenVINO inference
+- **ROIInferenceResult**: Wraps inference result with region metadata and extraction timing
+- Methods: `infer_roi()`, `infer_rois()`, `infer_from_regions()`
+- Preserves original frame coordinates through the full pipeline
+- Reuses existing InferenceEngine without duplication
+
 ### Not yet implemented
-- ROI extraction and ROI inference
+- Baseline vs ROI benchmark comparison
 - Spatial selection / motion detection
 - Temporal tracking
 - Scheduling
 - Async inference
-- Benchmark comparison (full-frame vs selective)
+- Accuracy evaluation
 
 ## Installation
 
@@ -80,7 +93,7 @@ pip install -e ".[dev]"
 ## Quick Start
 
 ```bash
-# Run all tests (189 tests)
+# Run all tests (273 tests)
 python -m pytest tests/ -v
 
 # Generate test model
@@ -123,6 +136,19 @@ print(bench_result.summary())
 with open("benchmark_result.json", "w") as f:
     f.write(bench_result.to_json())
 
+# ROI inference
+from foveaedge.inference.roi_engine import ROIInferenceEngine
+from foveaedge.regions import ROIExtractor, Region
+
+roi_engine = ROIInferenceEngine(engine)
+extractor = ROIExtractor()
+
+region = Region(x=0, y=0, width=32, height=32)
+extracted = extractor.extract(image, region)
+roi_result = roi_engine.infer_roi(extracted)
+print(f"ROI inference time: {roi_result.inference_time_s:.4f}s")
+print(f"Region: {roi_result.region}")
+
 # Work with regions
 r1 = Region(x=10, y=10, width=50, height=50)
 r2 = Region(x=30, y=30, width=50, height=50)
@@ -160,6 +186,8 @@ Inference                    ROI Extraction
 
 Day 3 establishes the **Full Frame** branch (baseline).
 Day 4 establishes the **Region/ROI primitive** required by the future ROI branch.
+Day 5 establishes **ROI extraction** from frames.
+Day 6 establishes **ROI inference** connecting extraction to OpenVINO.
 
 ## Project Structure
 
@@ -173,7 +201,8 @@ FoveaEdge/
 │   ├── model.py                # ModelLoader, ModelInfo, TensorInfo
 │   ├── inference/
 │   │   ├── __init__.py
-│   │   └── engine.py           # InferenceEngine with timing
+│   │   ├── engine.py           # InferenceEngine with timing
+│   │   └── roi_engine.py       # ROIInferenceEngine + ROIInferenceResult
 │   ├── benchmark/
 │   │   ├── __init__.py
 │   │   ├── config.py           # BenchmarkConfig
@@ -185,9 +214,10 @@ FoveaEdge/
 │       ├── __init__.py
 │       ├── region.py           # Region with validation/clipping
 │       ├── region_set.py       # RegionSet collection
-│       └── geometry.py         # IoU, intersection, containment
+│       ├── geometry.py         # IoU, intersection, containment
+│       └── extraction.py       # ExtractedROI + ROIExtractor
 ├── tests/
-│   ├── unit/                   # 159 unit tests
+│   ├── unit/                   # 246 unit tests
 │   │   ├── test_model.py
 │   │   ├── test_inference.py
 │   │   ├── test_benchmark_config.py
@@ -196,7 +226,9 @@ FoveaEdge/
 │   │   ├── test_frame_source.py
 │   │   ├── test_region.py
 │   │   ├── test_region_set.py
-│   │   └── test_geometry.py
+│   │   ├── test_geometry.py
+│   │   ├── test_roi_extraction.py
+│   │   └── test_roi_inference.py
 │   ├── integration/            # 17 integration tests
 │   │   ├── test_inference_pipeline.py
 │   │   └── test_baseline_runner.py
